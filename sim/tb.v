@@ -2,4 +2,6 @@
 
 module tb_rx;
 
+localparam integer DATA_BITS = 8;
+
 endmodule

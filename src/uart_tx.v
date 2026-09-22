@@ -10,11 +10,10 @@ module uart_tx #(
 );
 
 reg [2:0] CS,NS;
-reg temp_save;
 localparam integer BIT_IDX_WIDTH = $clog2(DATA_BITS);
 reg [BIT_IDX_WIDTH-1:0] bit_idx;
 reg [DATA_BITS-1:0] data_tmp;
-/*
+
 localparam 
     IDLE   = 0,
     READ   = 1,
@@ -22,40 +21,45 @@ localparam
 
 always @(*)begin
     case(CS)
-    IDLE:
-    READ:
-    OUTPUT:
-    default: 
-end */
+    IDLE:       NS = (i_Tx_valid) READ : IDLE; 
+    READ:       NS = OUTPUT;
+    OUTPUT:     NS = (bit_idx == BIT_IDX_WIDTH)? OUTPUT : IDLE;
+    default:    NS = IDLE;
+end 
 
 always @(posedge i_clk or posedge i_rst)begin
     if(i_rst)begin
-        CS  <= IDLE;
-        temp_save <= 0;
+        CS          <= IDLE;
+        data_tmp    <= 0;
     end
     else begin
         CS <= NS;
         if(i_Tx_valid)begin
-            temp_save   <= 1;
-            data_tmp    <= (temp_save){0,data_tmp[7:1]} :  i_Tx_data;
+            data_tmp    <=  i_Tx_data;
         end
         else begin
-            temp_save   <= 0;
-            data_tmp    <= 0;
+            data_tmp    <= data_tmp;
         end
     end
 end
 
 always @(posedge i_clk or posedge i_rst)begin
     if(i_rst)begin
-        o_stx <= 0;
+        o_stx   <= 0;
+        bit_idx <= 0;
     end
     else begin
-        if(temp_save)begin
-            o_stx       <= data_tmp[0];
+        if(bit_idx == BIT_IDX_WIDTH) begin
+            bit_idx     <= 0;
+            o_stx       <= 1;
+        end 
+        else if(i_bps_en)begin
+            o_stx       <= data_tmp[bit_idx];
+            bit_idx     <= bit_idx + 1;
         end
         else begin
-            o_stx       <= 0;
+            bit_idx     <= bit_idx;
+            o_stx       <= 1;
         end
     end
 end

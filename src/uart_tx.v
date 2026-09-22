@@ -25,8 +25,8 @@ always @(*)begin
     case(CS)
         IDLE:       NS = (i_Tx_valid)? START : IDLE; 
         START:      NS = (i_bps_en)  ? OUTPUT : START;
-        OUTPUT:     NS = (bit_idx == DATA_BITS - 1)? END : OUTPUT;
-        END:        NS = (i_bps_en)  ? OUTPUT : IDLE;
+        OUTPUT:     NS = (bit_idx == DATA_BITS - 1 && i_bps_en)? END : OUTPUT;
+        END:        NS = (i_bps_en)  ? IDLE : END;
         default:    NS = IDLE;
     endcase
 end 
@@ -53,12 +53,12 @@ always @(posedge i_clk or posedge i_rst)begin
         bit_idx <= 0;
     end
     else begin
-        if(bit_idx == DATA_BITS) begin
+        if(bit_idx == DATA_BITS - 1) begin
             bit_idx     <= 0;
         end 
         else if(CS == START) o_stx <= 0;
         else if(CS == END)   o_stx <= 1;
-        else if(i_bps_en)begin
+        else if(!i_bps_en)begin
             o_stx       <= data_tmp[bit_idx];
             bit_idx     <= bit_idx + 1;
         end

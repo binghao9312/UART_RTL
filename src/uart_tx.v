@@ -38,7 +38,7 @@ always @(posedge i_clk or posedge i_rst)begin
     end
     else begin
         CS <= NS;
-        if(i_Tx_valid)begin
+        if(CS == IDLE && i_Tx_valid)begin
             data_tmp    <=  i_Tx_data;
         end
         else begin
@@ -49,22 +49,19 @@ end
 
 always @(posedge i_clk or posedge i_rst)begin
     if(i_rst)begin
-        o_stx   <= 0;
+        o_stx   <= 1;
         bit_idx <= 0;
     end
     else begin
-        if(bit_idx == DATA_BITS - 1) begin
-            bit_idx     <= 0;
-        end 
-        else if(CS == START) o_stx <= 0;
-        else if(CS == END)   o_stx <= 1;
+        if(CS == START) o_stx <= 0;
+        else if(CS == END)begin   o_stx <= 1; bit_idx <= 0;end
         else if(i_bps_en && CS == OUTPUT)begin
             o_stx       <= data_tmp[bit_idx];
             bit_idx     <= bit_idx + 1;
         end
         else begin
             bit_idx     <= bit_idx;
-            o_stx       <= 1;
+            o_stx       <= o_stx;
         end
     end
 end

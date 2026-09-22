@@ -58,7 +58,7 @@ always @(posedge i_clk or posedge i_rst)begin
         end 
         else if(CS == START) o_stx <= 0;
         else if(CS == END)   o_stx <= 1;
-        else if(!i_bps_en)begin
+        else if(i_bps_en && CS == OUTPUT)begin
             o_stx       <= data_tmp[bit_idx];
             bit_idx     <= bit_idx + 1;
         end
